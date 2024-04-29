@@ -68,9 +68,7 @@ class CredList(QWidget):
         course = self.credWidget.item(row, 0).text()
         credits = int(self.credWidget.item(row, 1).text())
         grade = int(self.credWidget.item(row, 2).text())
-        # To be implemented
-        self.removeEntry(row)
-        self.addEntry(course, credits, grade)
+        EditCreditWindow(self, row, course, credits, grade).exec()
 
 
 class RemoveButton(QPushButton):
@@ -191,6 +189,51 @@ class AddCreditWindow(QDialog):
             self.courseEntry.text(),
             int(self.creditsEntry.text()),
             int(self.gradeEntry.text())
+        )
+        self.close()
+
+
+class EditCreditWindow(QDialog):
+    def __init__(self, credList, row, oldCourse, oldCredits, oldGrade):
+        super(EditCreditWindow, self).__init__()
+
+        self.setWindowTitle("Edit Credit")
+        self.credList = credList
+        self.row = row
+
+        layout = QVBoxLayout()
+
+        courseLabel = QLabel("Course")
+        self.courseEntry = QLineEdit()
+        self.courseEntry.setText(oldCourse)
+
+        creditsLabel = QLabel("Credits")
+        self.creditsEntry = QLineEdit()
+        self.creditsEntry.setText(str(oldCredits))
+
+        gradeLabel = QLabel("Grade")
+        self.gradeEntry = QLineEdit()
+        self.gradeEntry.setText(str(oldGrade))
+
+        submitButton = QPushButton("Submit")
+        submitButton.clicked.connect(self.onSubmit)
+
+        layout.addWidget(courseLabel)
+        layout.addWidget(self.courseEntry)
+        layout.addWidget(creditsLabel)
+        layout.addWidget(self.creditsEntry)
+        layout.addWidget(gradeLabel)
+        layout.addWidget(self.gradeEntry)
+        layout.addWidget(submitButton)
+
+        self.setLayout(layout)
+
+    def onSubmit(self):
+        self.credList.removeEntry(self.row)
+        self.credList.addEntry(
+            self.courseEntry.text(),
+            self.creditsEntry.text(),
+            self.gradeEntry.text()
         )
         self.close()
 
