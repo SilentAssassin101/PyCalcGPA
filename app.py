@@ -1,8 +1,17 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow, \
     QWidget, QVBoxLayout, QHBoxLayout, QListWidget, QLabel, \
-    QTableWidgetItem, QTableWidget, QPushButton
-from PyQt5.QtCore import QSize
+    QTableWidgetItem, QTableWidget, QPushButton, QDialog, \
+    QLineEdit
+from PyQt5.QtCore import QSize, pyqtSignal
 from PyQt5.QtGui import QPalette, QColor
+
+overallGrades = {
+    "overallGPA": 0.0,
+    "freshmanGPA": 0.0,
+    "sophomoreGPA": 0.0,
+    "juniorGPA": 0.0,
+    "seniorGPA": 0.0
+}
 
 
 class Color(QWidget):
@@ -23,7 +32,7 @@ class CredList(QWidget):
         self.credWidget.setColumnCount(6)
         self.credWidget.setHorizontalHeaderLabels(
             ["Course", "Credits", "Grade", "GPA", "Remove", "Edit"]
-            )
+        )
 
         titleLabel = QLabel("Credits")
 
@@ -47,10 +56,10 @@ class CredList(QWidget):
         self.credWidget.setItem(rowPosition, 3, QTableWidgetItem("0.0"))
         self.credWidget.setCellWidget(
             rowPosition, 4, RemoveButton(self, rowPosition)
-            )
+        )
         self.credWidget.setCellWidget(
             rowPosition, 5, EditButton(self, rowPosition)
-            )
+        )
 
     def removeEntry(self, row):
         self.credWidget.removeRow(row)
@@ -81,17 +90,45 @@ class EditButton(QPushButton):
 
 
 class GradeList(QWidget):
-    def __init__(self):
+    def __init__(self, credList):
         super(GradeList, self).__init__()
+        
+        self.credList = credList
 
         titleLabel = QLabel("Grades")
         gradeWidget = QListWidget()
 
+        gradeWidget.addItem(
+            "Overall GPA: " + str(overallGrades["overallGPA"])
+        )
+        gradeWidget.addItem(
+            "Freshman GPA: " + str(overallGrades["freshmanGPA"])
+        )
+        gradeWidget.addItem(
+            "Sophomore GPA: " + str(overallGrades["sophomoreGPA"])
+        )
+        gradeWidget.addItem(
+            "Junior GPA: " + str(overallGrades["juniorGPA"])
+        )
+        gradeWidget.addItem(
+            "Senior GPA: " + str(overallGrades["seniorGPA"])
+        )
+
+        addCreditButton = QPushButton("Add Credit")
+        addCreditButton.setStyleSheet("background-color: green")
+        addCreditButton.clicked.connect(self.addCredit)
+
         layout = QVBoxLayout()
         layout.addWidget(titleLabel)
         layout.addWidget(gradeWidget)
+        layout.addWidget(addCreditButton)
 
         self.setLayout(layout)
+
+    def addCredit(self):
+        addCreditWindow = AddCreditWindow(self)
+        addCreditWindow.submitted.connect(self.credList.addEntry)
+        addCreditWindow.exec()
 
 
 class MainWindow(QMainWindow):
@@ -102,17 +139,60 @@ class MainWindow(QMainWindow):
 
         mainLayout = QHBoxLayout()
 
+        theCredList = CredList()
+
         leftLayout = QVBoxLayout()
-        leftLayout.addWidget(GradeList())
+        leftLayout.addWidget(GradeList(theCredList))
         mainLayout.addLayout(leftLayout)
 
         rightLayout = QVBoxLayout()
-        rightLayout.addWidget(CredList())
+        rightLayout.addWidget(theCredList)
         mainLayout.addLayout(rightLayout)
 
         widget = QWidget()
         widget.setLayout(mainLayout)
         self.setCentralWidget(widget)
+
+
+class AddCreditWindow(QDialog):
+    submitted = pyqtSignal(str, int, int)
+
+    def __init__(self, credList):
+        super(AddCreditWindow, self).__init__()
+
+        self.setWindowTitle("Add Credit")
+
+        layout = QVBoxLayout()
+
+        courseLabel = QLabel("Course")
+        self.courseEntry = QLineEdit()
+
+        creditsLabel = QLabel("Credits")
+        self.creditsEntry = QLineEdit()
+
+        gradeLabel = QLabel("Grade")
+        self.gradeEntry = QLineEdit()
+
+        submitButton = QPushButton("Submit")
+        submitButton.clicked.connect(self.onSubmit)
+
+        layout.addWidget(courseLabel)
+        layout.addWidget(self.courseEntry)
+        layout.addWidget(creditsLabel)
+        layout.addWidget(self.creditsEntry)
+        layout.addWidget(gradeLabel)
+        layout.addWidget(self.gradeEntry)
+        layout.addWidget(submitButton)
+
+        self.setLayout(layout)
+
+    def onSubmit(self):
+        self.submitted.emit(
+            self.courseEntry.text(),
+            int(self.creditsEntry.text()),
+            int(self.gradeEntry.text())
+        )
+        self.close()
 
 
 app = QApplication([])
