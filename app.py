@@ -29,9 +29,9 @@ class CredList(QWidget):
         super(CredList, self).__init__()
 
         self.credWidget = QTableWidget()
-        self.credWidget.setColumnCount(6)
+        self.credWidget.setColumnCount(7)
         self.credWidget.setHorizontalHeaderLabels(
-            ["Course", "Credits", "Grade", "GPA", "Remove", "Edit"]
+            ["Course", "Credits", "Grade", "GPA", "Year", "Remove", "Edit"]
         )
 
         titleLabel = QLabel("Credits")
@@ -41,24 +41,25 @@ class CredList(QWidget):
         layout.addWidget(self.credWidget)
 
         self.setLayout(layout)
-        self.setMinimumSize(QSize(650, 0))
+        self.setMinimumSize(QSize(750, 0))
 
         # Testing
         self.addEntry("CSC 101", 3, 97)
 
-    def addEntry(self, course, credits, grade):
+    def addEntry(self, course, credits, grade, year="Default"):
         # Add a new row
         rowPosition = self.credWidget.rowCount()
         self.credWidget.insertRow(rowPosition)
-        self.credWidget.setItem(rowPosition, 0, QTableWidgetItem(course))
+        self.credWidget.setItem(rowPosition, 0, QTableWidgetItem(str(course)))
         self.credWidget.setItem(rowPosition, 1, QTableWidgetItem(str(credits)))
         self.credWidget.setItem(rowPosition, 2, QTableWidgetItem(str(grade)))
         self.credWidget.setItem(rowPosition, 3, QTableWidgetItem("0.0"))
-        self.credWidget.setCellWidget(
-            rowPosition, 4, RemoveButton(self, rowPosition)
-        )
+        self.credWidget.setItem(rowPosition, 4, QTableWidgetItem(str(year)))
         self.credWidget.setCellWidget(
             rowPosition, 5, EditButton(self, rowPosition)
+        )
+        self.credWidget.setCellWidget(
+            rowPosition, 6, RemoveButton(self, rowPosition)
         )
 
     def removeEntry(self, row):
@@ -68,7 +69,8 @@ class CredList(QWidget):
         course = self.credWidget.item(row, 0).text()
         credits = int(self.credWidget.item(row, 1).text())
         grade = int(self.credWidget.item(row, 2).text())
-        EditCreditWindow(self, row, course, credits, grade).exec()
+        year = self.credWidget.item(row, 4).text()
+        EditCreditWindow(self, row, course, year, credits, grade).exec()
 
 
 class RemoveButton(QPushButton):
@@ -90,7 +92,7 @@ class EditButton(QPushButton):
 class GradeList(QWidget):
     def __init__(self, credList):
         super(GradeList, self).__init__()
-        
+
         self.credList = credList
 
         titleLabel = QLabel("Grades")
@@ -194,7 +196,9 @@ class AddCreditWindow(QDialog):
 
 
 class EditCreditWindow(QDialog):
-    def __init__(self, credList, row, oldCourse, oldCredits, oldGrade):
+    def __init__(
+        self, credList, row, oldCourse, oldYear, oldCredits, oldGrade
+    ):
         super(EditCreditWindow, self).__init__()
 
         self.setWindowTitle("Edit Credit")
@@ -215,6 +219,10 @@ class EditCreditWindow(QDialog):
         self.gradeEntry = QLineEdit()
         self.gradeEntry.setText(str(oldGrade))
 
+        yearLabel = QLabel("Year")
+        self.yearEntry = QLineEdit()
+        self.yearEntry.setText(oldYear)
+
         submitButton = QPushButton("Submit")
         submitButton.clicked.connect(self.onSubmit)
 
@@ -224,6 +232,8 @@ class EditCreditWindow(QDialog):
         layout.addWidget(self.creditsEntry)
         layout.addWidget(gradeLabel)
         layout.addWidget(self.gradeEntry)
+        layout.addWidget(yearLabel)
+        layout.addWidget(self.yearEntry)
         layout.addWidget(submitButton)
 
         self.setLayout(layout)
@@ -233,7 +243,8 @@ class EditCreditWindow(QDialog):
         self.credList.addEntry(
             self.courseEntry.text(),
             self.creditsEntry.text(),
-            self.gradeEntry.text()
+            self.gradeEntry.text(),
+            self.yearEntry.text()
         )
         self.close()
 
