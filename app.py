@@ -71,6 +71,31 @@ def updateGPA():
         overallGrades[key] = totalGPA[key]
 
 
+conversionValues = {
+            94: 4.0,
+            90: 3.7,
+            87: 3.3,
+            84: 3.0,
+            80: 2.7,
+            77: 2.3,
+            74: 2.0,
+            70: 1.7,
+            67: 1.3,
+            64: 1.0,
+            60: 0.7,
+            0: 0.0
+        }
+
+
+def convertGrade(grade):
+    if grade < 60:
+        return 0.0
+    for key in conversionValues:
+        if grade >= key:
+            return conversionValues[key]
+    raise ValueError("Invalid grade")
+
+
 class Color(QWidget):
     def __init__(self, color):
         super(Color, self).__init__()
@@ -103,13 +128,13 @@ class CredList(QWidget):
         self.setMinimumSize(QSize(750, 0))
 
     def addEntry(self, course, credits, grade, year="Freshman", save=True):
-        # Add a new row
         rowPosition = self.credWidget.rowCount()
         self.credWidget.insertRow(rowPosition)
         self.credWidget.setItem(rowPosition, 0, QTableWidgetItem(str(course)))
         self.credWidget.setItem(rowPosition, 1, QTableWidgetItem(str(credits)))
         self.credWidget.setItem(rowPosition, 2, QTableWidgetItem(str(grade)))
-        self.credWidget.setItem(rowPosition, 3, QTableWidgetItem("0.0"))
+        gpa = convertGrade(grade)
+        self.credWidget.setItem(rowPosition, 3, QTableWidgetItem(str(gpa)))
         self.credWidget.setItem(rowPosition, 4, QTableWidgetItem(str(year)))
         self.credWidget.setCellWidget(
             rowPosition, 5, EditButton(self, rowPosition)
@@ -188,21 +213,32 @@ class GradeList(QWidget):
         addCreditWindow.exec()
 
     def updateSelf(self):
+
         self.gradeWidget.clear()
         self.gradeWidget.addItem(
-            "Overall GPA: " + str(overallGrades["overallGPA"])
+            "Overall GPA: " + str(
+                convertGrade(overallGrades["overallGPA"])
+            )
         )
         self.gradeWidget.addItem(
-            "Freshman GPA: " + str(overallGrades["freshmanGPA"])
+            "Freshman GPA: " + str(
+                convertGrade(overallGrades["freshmanGPA"])
+            )
         )
         self.gradeWidget.addItem(
-            "Sophomore GPA: " + str(overallGrades["sophomoreGPA"])
+            "Sophomore GPA: " + str(
+                convertGrade(overallGrades["sophomoreGPA"])
+            )
         )
         self.gradeWidget.addItem(
-            "Junior GPA: " + str(overallGrades["juniorGPA"])
+            "Junior GPA: " + str(
+                convertGrade(overallGrades["juniorGPA"])
+            )
         )
         self.gradeWidget.addItem(
-            "Senior GPA: " + str(overallGrades["seniorGPA"])
+            "Senior GPA: " + str(
+                convertGrade(overallGrades["seniorGPA"])
+            )
         )
 
 
