@@ -133,7 +133,7 @@ class CredList(QWidget):
         self.credWidget.setItem(rowPosition, 0, QTableWidgetItem(str(course)))
         self.credWidget.setItem(rowPosition, 1, QTableWidgetItem(str(credits)))
         self.credWidget.setItem(rowPosition, 2, QTableWidgetItem(str(grade)))
-        gpa = convertGrade(grade)
+        gpa = convertGrade(int(grade))
         self.credWidget.setItem(rowPosition, 3, QTableWidgetItem(str(gpa)))
         self.credWidget.setItem(rowPosition, 4, QTableWidgetItem(str(year)))
         self.credWidget.setCellWidget(
