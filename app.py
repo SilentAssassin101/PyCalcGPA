@@ -22,6 +22,56 @@ cur.execute(
 )
 
 
+def updateGPA():
+    res = cur.execute("SELECT * FROM grades")
+
+    totalGrades = {
+        "freshman": 0.0,
+        "sophomore": 0.0,
+        "junior": 0.0,
+        "senior": 0.0
+    }
+
+    totalCredits = {
+        "freshman": 0,
+        "sophomore": 0,
+        "junior": 0,
+        "senior": 0
+    }
+
+    for row in res.fetchall():
+        totalGrades[row[3].lower()] += row[2]
+        totalCredits[row[3].lower()] += row[1]
+
+    totalGPA = {
+        "overallGPA": 0.0,
+        "freshmanGPA": 0.0,
+        "sophomoreGPA": 0.0,
+        "juniorGPA": 0.0,
+        "seniorGPA": 0.0
+    }
+
+    sumGrades = 0
+    sumCredits = 0
+
+    for year in totalGrades:
+        try:
+            totalGPA[year] = totalGrades[year] / totalCredits[year]
+        except ZeroDivisionError:
+            totalGPA[year] = 0.0
+        sumGrades += totalGrades[year]
+        sumCredits += totalCredits[year]
+
+    try:
+        totalGPA["overallGPA"] = sumGrades / sumCredits
+    except ZeroDivisionError:
+        totalGPA["overallGPA"] = 0.0
+
+    for key in totalGPA:
+        overallGrades[key] = totalGPA[key]
+        print(f"{key}: {totalGPA[key]}")
+
+
 class Color(QWidget):
     def __init__(self, color):
         super(Color, self).__init__()
@@ -33,8 +83,10 @@ class Color(QWidget):
 
 
 class CredList(QWidget):
-    def __init__(self):
+    def __init__(self, parentWindow):
         super(CredList, self).__init__()
+
+        self.parentWindow = parentWindow
 
         self.credWidget = QTableWidget()
         self.credWidget.setColumnCount(7)
@@ -50,11 +102,6 @@ class CredList(QWidget):
 
         self.setLayout(layout)
         self.setMinimumSize(QSize(750, 0))
-
-        # Testing
-        # self.addEntry("CSC 101", 3, 97)
-
-        self.setup()
 
     def addEntry(self, course, credits, grade, year="Freshman", save=True):
         # Add a new row
@@ -77,12 +124,14 @@ class CredList(QWidget):
                 (course, credits, grade, year)
             )
             con.commit()
+            self.parentWindow.updateLeft()
 
     def removeEntry(self, row):
         course = self.credWidget.item(row, 0).text()
         self.credWidget.removeRow(row)
         cur.execute("DELETE FROM grades WHERE course=?", (course,))
         con.commit()
+        self.parentWindow.updateLeft()
 
     def editEntry(self, row):
         course = self.credWidget.item(row, 0).text()
@@ -95,6 +144,7 @@ class CredList(QWidget):
         res = cur.execute("SELECT * FROM grades")
         for row in res.fetchall():
             self.addEntry(row[0], row[1], row[2], row[3], False)
+        self.parentWindow.updateLeft()
 
 
 class RemoveButton(QPushButton):
@@ -120,23 +170,9 @@ class GradeList(QWidget):
         self.credList = credList
 
         titleLabel = QLabel("Grades")
-        gradeWidget = QListWidget()
+        self.gradeWidget = QListWidget()
 
-        gradeWidget.addItem(
-            "Overall GPA: " + str(overallGrades["overallGPA"])
-        )
-        gradeWidget.addItem(
-            "Freshman GPA: " + str(overallGrades["freshmanGPA"])
-        )
-        gradeWidget.addItem(
-            "Sophomore GPA: " + str(overallGrades["sophomoreGPA"])
-        )
-        gradeWidget.addItem(
-            "Junior GPA: " + str(overallGrades["juniorGPA"])
-        )
-        gradeWidget.addItem(
-            "Senior GPA: " + str(overallGrades["seniorGPA"])
-        )
+        self.updateSelf()
 
         addCreditButton = QPushButton("Add Credit")
         addCreditButton.setStyleSheet("background-color: green")
@@ -144,7 +180,7 @@ class GradeList(QWidget):
 
         layout = QVBoxLayout()
         layout.addWidget(titleLabel)
-        layout.addWidget(gradeWidget)
+        layout.addWidget(self.gradeWidget)
         layout.addWidget(addCreditButton)
 
         self.setLayout(layout)
@@ -153,6 +189,24 @@ class GradeList(QWidget):
         addCreditWindow = AddCreditWindow(self)
         addCreditWindow.submitted.connect(self.credList.addEntry)
         addCreditWindow.exec()
+
+    def updateSelf(self):
+        self.gradeWidget.clear()
+        self.gradeWidget.addItem(
+            "Overall GPA: " + str(overallGrades["overallGPA"])
+        )
+        self.gradeWidget.addItem(
+            "Freshman GPA: " + str(overallGrades["freshmanGPA"])
+        )
+        self.gradeWidget.addItem(
+            "Sophomore GPA: " + str(overallGrades["sophomoreGPA"])
+        )
+        self.gradeWidget.addItem(
+            "Junior GPA: " + str(overallGrades["juniorGPA"])
+        )
+        self.gradeWidget.addItem(
+            "Senior GPA: " + str(overallGrades["seniorGPA"])
+        )
 
 
 class MainWindow(QMainWindow):
@@ -163,10 +217,12 @@ class MainWindow(QMainWindow):
 
         mainLayout = QHBoxLayout()
 
-        theCredList = CredList()
+        theCredList = CredList(self)
+        self.theGradeList = GradeList(theCredList)
+        theCredList.setup()
 
         leftLayout = QVBoxLayout()
-        leftLayout.addWidget(GradeList(theCredList))
+        leftLayout.addWidget(self.theGradeList)
         mainLayout.addLayout(leftLayout)
 
         rightLayout = QVBoxLayout()
@@ -176,6 +232,10 @@ class MainWindow(QMainWindow):
         widget = QWidget()
         widget.setLayout(mainLayout)
         self.setCentralWidget(widget)
+
+    def updateLeft(self):
+        updateGPA()
+        self.theGradeList.updateSelf()
 
 
 class AddCreditWindow(QDialog):
