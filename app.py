@@ -56,9 +56,9 @@ def updateGPA():
 
     for year in totalGrades:
         try:
-            totalGPA[year] = totalGrades[year] / totalCredits[year]
+            totalGPA[year + "GPA"] = totalGrades[year] / totalCredits[year]
         except ZeroDivisionError:
-            totalGPA[year] = 0.0
+            totalGPA[year + "GPA"] = 0.0
         sumGrades += totalGrades[year]
         sumCredits += totalCredits[year]
 
@@ -69,7 +69,6 @@ def updateGPA():
 
     for key in totalGPA:
         overallGrades[key] = totalGPA[key]
-        print(f"{key}: {totalGPA[key]}")
 
 
 class Color(QWidget):
@@ -171,8 +170,6 @@ class GradeList(QWidget):
 
         titleLabel = QLabel("Grades")
         self.gradeWidget = QListWidget()
-
-        self.updateSelf()
 
         addCreditButton = QPushButton("Add Credit")
         addCreditButton.setStyleSheet("background-color: green")
