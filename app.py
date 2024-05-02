@@ -56,7 +56,7 @@ class CredList(QWidget):
 
         self.setup()
 
-    def addEntry(self, course, credits, grade, year="Default", save=True):
+    def addEntry(self, course, credits, grade, year="Freshman", save=True):
         # Add a new row
         rowPosition = self.credWidget.rowCount()
         self.credWidget.insertRow(rowPosition)
