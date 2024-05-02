@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, \
     QLineEdit
 from PyQt5.QtCore import QSize, pyqtSignal
 from PyQt5.QtGui import QPalette, QColor
+import sqlite3
 
 overallGrades = {
     "overallGPA": 0.0,
@@ -12,6 +13,13 @@ overallGrades = {
     "juniorGPA": 0.0,
     "seniorGPA": 0.0
 }
+
+con = sqlite3.connect("grades.db")
+cur = con.cursor()
+cur.execute(
+    """CREATE TABLE IF NOT EXISTS grades
+    (course TEXT, credits INTEGER, grade INTEGER, year TEXT)"""
+)
 
 
 class Color(QWidget):
@@ -44,9 +52,11 @@ class CredList(QWidget):
         self.setMinimumSize(QSize(750, 0))
 
         # Testing
-        self.addEntry("CSC 101", 3, 97)
+        # self.addEntry("CSC 101", 3, 97)
 
-    def addEntry(self, course, credits, grade, year="Default"):
+        self.setup()
+
+    def addEntry(self, course, credits, grade, year="Default", save=True):
         # Add a new row
         rowPosition = self.credWidget.rowCount()
         self.credWidget.insertRow(rowPosition)
@@ -61,9 +71,18 @@ class CredList(QWidget):
         self.credWidget.setCellWidget(
             rowPosition, 6, RemoveButton(self, rowPosition)
         )
+        if save:
+            cur.execute(
+                "INSERT INTO grades VALUES (?, ?, ?, ?)",
+                (course, credits, grade, year)
+            )
+            con.commit()
 
     def removeEntry(self, row):
+        course = self.credWidget.item(row, 0).text()
         self.credWidget.removeRow(row)
+        cur.execute("DELETE FROM grades WHERE course=?", (course,))
+        con.commit()
 
     def editEntry(self, row):
         course = self.credWidget.item(row, 0).text()
@@ -71,6 +90,11 @@ class CredList(QWidget):
         grade = int(self.credWidget.item(row, 2).text())
         year = self.credWidget.item(row, 4).text()
         EditCreditWindow(self, row, course, year, credits, grade).exec()
+
+    def setup(self):
+        res = cur.execute("SELECT * FROM grades")
+        for row in res.fetchall():
+            self.addEntry(row[0], row[1], row[2], row[3], False)
 
 
 class RemoveButton(QPushButton):
@@ -249,9 +273,14 @@ class EditCreditWindow(QDialog):
         self.close()
 
 
-app = QApplication([])
+def main():
+    app = QApplication([])
 
-window = MainWindow()
-window.show()
+    window = MainWindow()
+    window.show()
 
-app.exec()
+    app.exec()
+
+
+if __name__ == "__main__":
+    main()
