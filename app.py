@@ -18,7 +18,7 @@ con = sqlite3.connect("grades.db")
 cur = con.cursor()
 cur.execute(
     """CREATE TABLE IF NOT EXISTS grades
-    (course TEXT, credits INTEGER, grade INTEGER, year TEXT)"""
+    (course TEXT, credits FLOAT, grade INTEGER, year TEXT)"""
 )
 
 
@@ -162,7 +162,7 @@ class CredList(QWidget):
 
     def editEntry(self, row):
         course = self.credWidget.item(row, 0).text()
-        credits = int(self.credWidget.item(row, 1).text())
+        credits = float(self.credWidget.item(row, 1).text())
         grade = int(self.credWidget.item(row, 2).text())
         year = self.credWidget.item(row, 4).text()
         EditCreditWindow(self, row, course, year, credits, grade).exec()
@@ -275,7 +275,7 @@ class MainWindow(QMainWindow):
 
 
 class AddCreditWindow(QDialog):
-    submitted = pyqtSignal(str, int, int)
+    submitted = pyqtSignal(str, float, int)
 
     def __init__(self, credList):
         super(AddCreditWindow, self).__init__()
@@ -309,7 +309,7 @@ class AddCreditWindow(QDialog):
     def onSubmit(self):
         self.submitted.emit(
             self.courseEntry.text(),
-            int(self.creditsEntry.text()),
+            float(self.creditsEntry.text()),
             int(self.gradeEntry.text())
         )
         self.close()
