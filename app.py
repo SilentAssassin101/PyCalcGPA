@@ -23,12 +23,16 @@ cur.execute(
 )
 
 
-def fetchGrades() -> Tuple[Dict[str, List[int]], Dict[str, List[float]]]:
-    """Fetches the grades from the database and returns them in a dictionary.
-    Format: {year: [grades], year: [credits]}
+def fetchGrades() -> Tuple[
+    Dict[str, List[int]], Dict[str, List[float]], Dict[str, List[str]]
+]:
+    """Fetches the grades, credits, course names from the database.
 
     Returns:
-        Tuple[Dict[str, List[int]], Dict[str, List[float]]]: Grades & Credits
+        Tuple[ Dict[str, List[int]],
+        Dict[str, List[float]],
+        Dict[str, List[str]] ]:
+        Tuple of dictionaries containing grades, credits, and course names
     """
     res = cur.execute("SELECT * FROM grades")
 
@@ -44,22 +48,30 @@ def fetchGrades() -> Tuple[Dict[str, List[int]], Dict[str, List[float]]]:
         "junior": [],
         "senior": []
     }
+    totalCourses = {
+        "freshman": [],
+        "sophomore": [],
+        "junior": [],
+        "senior": []
+    }
 
     for row in res.fetchall():
         gradeColumn = row[2]
         creditColumn = row[1]
+        courseColumn = row[0]
         yearColumn = row[3].lower()
 
         totalGrades[yearColumn].append(gradeColumn)
         totalCredits[yearColumn].append(creditColumn)
+        totalCourses[yearColumn].append(courseColumn)
 
-    return totalGrades, totalCredits
+    return totalGrades, totalCredits, totalCourses
 
 
 def updateGPA():
     """Updates the GPA values in the overallGrades dictionary
     """
-    totalGrades, totalCredits = fetchGrades()
+    totalGrades, totalCredits, totalCourses = fetchGrades()
     global overallGrades
 
     totalGPA = {
@@ -82,7 +94,10 @@ def updateGPA():
             # Converts each grade to a GPA value
             # Weights each GPA value depending on credits
             for i, grade in enumerate(yearValue):
-                theseGrades += (convertGrade(grade) * totalCredits[year][i])
+                courseName = totalCourses[year][i]
+                theseGrades += (
+                    convertGrade(grade, courseName) * totalCredits[year][i]
+                )
 
             # Divides the total weighted GPA value by the total credits
             totalGPA[year + "GPA"] = theseGrades / sum(totalCredits[year])
