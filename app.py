@@ -405,7 +405,7 @@ class MainWindow(QMainWindow):
 
 
 class AddCreditWindow(QDialog):
-    submitted = pyqtSignal(str, float, int)
+    submitted = pyqtSignal(str, float, int, str)
 
     def __init__(self, credList):
         super(AddCreditWindow, self).__init__()
@@ -423,6 +423,12 @@ class AddCreditWindow(QDialog):
         gradeLabel = QLabel("Grade")
         self.gradeEntry = QLineEdit()
 
+        yearLabel = QLabel("Year")
+        self.yearEntry = QLineEdit()
+        self.yearEntry.setPlaceholderText(
+            "Freshman, Sophomore, Junior, Senior"
+        )
+
         submitButton = QPushButton("Submit")
         submitButton.clicked.connect(self.onSubmit)
 
@@ -432,6 +438,8 @@ class AddCreditWindow(QDialog):
         layout.addWidget(self.creditsEntry)
         layout.addWidget(gradeLabel)
         layout.addWidget(self.gradeEntry)
+        layout.addWidget(yearLabel)
+        layout.addWidget(self.yearEntry)
         layout.addWidget(submitButton)
 
         self.setLayout(layout)
@@ -457,10 +465,16 @@ class AddCreditWindow(QDialog):
             print(e)
             return
 
+        if self.yearEntry.text() not in [
+            "Freshman", "Sophomore", "Junior", "Senior"
+        ]:
+            return
+
         self.submitted.emit(
             self.courseEntry.text(),
             float(self.creditsEntry.text()),
-            int(self.gradeEntry.text())
+            int(self.gradeEntry.text()),
+            str(self.yearEntry.text())
         )
         self.close()
 
