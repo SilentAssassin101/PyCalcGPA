@@ -214,10 +214,18 @@ class CredList(QWidget):
             ValueError: invalid credits, course, or grade
         """
 
-        if year not in ["Freshman", "Sophomore", "Junior", "Senior"]:
-            raise ValueError("Invalid year")
-        if course == "" or float(credits) == 0 or grade == "":
-            raise ValueError("Invalid data")
+        try:
+            if year not in ["Freshman", "Sophomore", "Junior", "Senior"]:
+                raise ValueError("Invalid year")
+            if course == "" or float(credits) == 0 or grade == "":
+                raise ValueError("Invalid data")
+            # Check if course already exists
+            for i in range(self.credWidget.rowCount()):
+                if self.credWidget.item(i, 0).text() == course:
+                    raise ValueError("Course already exists")
+        except ValueError as e:
+            print(e)
+            return
 
         rowPosition = self.credWidget.rowCount()
 
