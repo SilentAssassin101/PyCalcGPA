@@ -134,6 +134,8 @@ class CredList(QWidget):
     def addEntry(self, course, credits, grade, year="Freshman", save=True):
         if year not in ["Freshman", "Sophomore", "Junior", "Senior"]:
             raise ValueError("Invalid year")
+        if course == "" or float(credits) == 0 or grade == "":
+            raise ValueError("Invalid data")
         rowPosition = self.credWidget.rowCount()
         self.credWidget.insertRow(rowPosition)
         self.credWidget.setItem(rowPosition, 0, QTableWidgetItem(str(course)))
@@ -310,6 +312,12 @@ class AddCreditWindow(QDialog):
         self.setLayout(layout)
 
     def onSubmit(self):
+        if (
+            self.courseEntry.text() == "" or
+            self.creditsEntry.text() == "" or
+            self.gradeEntry.text() == ""
+        ):
+            return
         self.submitted.emit(
             self.courseEntry.text(),
             float(self.creditsEntry.text()),
