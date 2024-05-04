@@ -40,8 +40,9 @@ def updateGPA():
     }
 
     for row in res.fetchall():
-        totalGrades[row[3].lower()] += row[2]
-        totalCredits[row[3].lower()] += row[1]
+        cred = row[1]
+        totalGrades[row[3].lower()] += row[2] * cred
+        totalCredits[row[3].lower()] += cred
 
     totalGPA = {
         "overallGPA": 0.0,
