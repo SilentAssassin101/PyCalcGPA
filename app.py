@@ -26,23 +26,22 @@ def updateGPA():
     res = cur.execute("SELECT * FROM grades")
 
     totalGrades = {
-        "freshman": 0.0,
-        "sophomore": 0.0,
-        "junior": 0.0,
-        "senior": 0.0
+        "freshman": [],
+        "sophomore": [],
+        "junior": [],
+        "senior": []
     }
 
     totalCredits = {
-        "freshman": 0,
-        "sophomore": 0,
-        "junior": 0,
-        "senior": 0
+        "freshman": [],
+        "sophomore": [],
+        "junior": [],
+        "senior": []
     }
 
     for row in res.fetchall():
-        cred = row[1]
-        totalGrades[row[3].lower()] += row[2] * cred
-        totalCredits[row[3].lower()] += cred
+        totalGrades[row[3].lower()].append(row[2])
+        totalCredits[row[3].lower()].append(row[1])
 
     totalGPA = {
         "overallGPA": 0.0,
@@ -52,24 +51,28 @@ def updateGPA():
         "seniorGPA": 0.0
     }
 
-    sumGrades = 0
-    sumCredits = 0
-
-    for year in totalGrades:
+    allGrades = []
+    allCredits = []
+    for year, yearValue in totalGrades.items():
         try:
-            totalGPA[year + "GPA"] = totalGrades[year] / totalCredits[year]
+            theseGrades = 0
+            for i, grade in enumerate(yearValue):
+                theseGrades += (convertGrade(grade) * totalCredits[year][i])
+            totalGPA[year + "GPA"] = theseGrades / sum(totalCredits[year])
+
+            allGrades.append(theseGrades)
+            allCredits.append(sum(totalCredits[year]))
         except ZeroDivisionError:
             totalGPA[year + "GPA"] = 0.0
-        sumGrades += totalGrades[year]
-        sumCredits += totalCredits[year]
 
     try:
-        totalGPA["overallGPA"] = sumGrades / sumCredits
+        totalGPA["overallGPA"] = sum(allGrades) / sum(allCredits)
+
     except ZeroDivisionError:
         totalGPA["overallGPA"] = 0.0
 
-    for key in totalGPA:
-        overallGrades[key] = totalGPA[key]
+    for key, value in totalGPA.items():
+        overallGrades[key] = value
 
 
 conversionValues = {
@@ -91,9 +94,9 @@ conversionValues = {
 def convertGrade(grade):
     if grade < 60:
         return 0.0
-    for key in conversionValues:
+    for key, value in conversionValues.items():
         if grade >= key:
-            return conversionValues[key]
+            return value
     raise ValueError("Invalid grade")
 
 
@@ -220,27 +223,27 @@ class GradeList(QWidget):
         self.gradeWidget.clear()
         self.gradeWidget.addItem(
             "Overall GPA: " + str(
-                convertGrade(overallGrades["overallGPA"])
+                (overallGrades["overallGPA"])
             )
         )
         self.gradeWidget.addItem(
             "Freshman GPA: " + str(
-                convertGrade(overallGrades["freshmanGPA"])
+                (overallGrades["freshmanGPA"])
             )
         )
         self.gradeWidget.addItem(
             "Sophomore GPA: " + str(
-                convertGrade(overallGrades["sophomoreGPA"])
+                (overallGrades["sophomoreGPA"])
             )
         )
         self.gradeWidget.addItem(
             "Junior GPA: " + str(
-                convertGrade(overallGrades["juniorGPA"])
+                (overallGrades["juniorGPA"])
             )
         )
         self.gradeWidget.addItem(
             "Senior GPA: " + str(
-                convertGrade(overallGrades["seniorGPA"])
+                (overallGrades["seniorGPA"])
             )
         )
 
