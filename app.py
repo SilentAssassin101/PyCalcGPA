@@ -128,6 +128,8 @@ class CredList(QWidget):
         self.setMinimumSize(QSize(750, 0))
 
     def addEntry(self, course, credits, grade, year="Freshman", save=True):
+        if year not in ["Freshman", "Sophomore", "Junior", "Senior"]:
+            raise ValueError("Invalid year")
         rowPosition = self.credWidget.rowCount()
         self.credWidget.insertRow(rowPosition)
         self.credWidget.setItem(rowPosition, 0, QTableWidgetItem(str(course)))
