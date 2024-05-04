@@ -288,6 +288,14 @@ class CredList(QWidget):
             self.addEntry(row[0], row[1], row[2], row[3], False)
         self.parentWindow.updateLeft()
 
+    def deleteAll(self):
+        """Deletes all entries from the table and the database
+        """
+        cur.execute("DELETE FROM grades")
+        con.commit()
+        self.credWidget.setRowCount(0)
+        self.parentWindow.updateLeft()
+
 
 class RemoveButton(QPushButton):
     def __init__(self, credList: CredList, row: int):
@@ -322,6 +330,7 @@ class GradeList(QWidget):
         layout.addWidget(titleLabel)
         layout.addWidget(self.gradeWidget)
         layout.addWidget(addCreditButton)
+        layout.addWidget(DeleteAllButton(self.credList))
 
         self.setLayout(layout)
 
@@ -535,6 +544,35 @@ class EditCreditWindow(QDialog):
             self.gradeEntry.text(),
             self.yearEntry.text()
         )
+        self.close()
+
+
+class DeleteAllButton(QPushButton):
+    def __init__(self, credList: CredList):
+        super(DeleteAllButton, self).__init__()
+        self.setText("Delete All")
+        self.setStyleSheet("background-color: red")
+        # Confirmation window
+        self.clicked.connect(lambda: ConfirmDeleteAll(credList).exec())
+
+
+class ConfirmDeleteAll(QDialog):
+    def __init__(self, credList: CredList):
+        super(ConfirmDeleteAll, self).__init__()
+
+        layout = QVBoxLayout()
+
+        confirmLabel = QLabel("Are you sure you want to delete all?")
+        confirmButton = QPushButton("Confirm")
+        confirmButton.clicked.connect(lambda: self.handleClicked(credList))
+
+        layout.addWidget(confirmLabel)
+        layout.addWidget(confirmButton)
+
+        self.setLayout(layout)
+
+    def handleClicked(self, credList: CredList):
+        credList.deleteAll()
         self.close()
 
 
