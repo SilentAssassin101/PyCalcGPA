@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, \
 from PyQt5.QtCore import QSize, pyqtSignal
 from PyQt5.QtGui import QPalette, QColor
 import sqlite3
+from typing import List, Dict, Tuple
 
 overallGrades = {
     "overallGPA": 0.0,
@@ -22,7 +23,13 @@ cur.execute(
 )
 
 
-def updateGPA():
+def fetchGrades() -> Tuple[Dict[str, List[int]], Dict[str, List[float]]]:
+    """Fetches the grades from the database and returns them in a dictionary.
+    Format: {year: [grades], year: [credits]}
+
+    Returns:
+        Tuple[Dict[str, List[int]], Dict[str, List[float]]]: Grades & Credits
+    """
     res = cur.execute("SELECT * FROM grades")
 
     totalGrades = {
@@ -31,7 +38,6 @@ def updateGPA():
         "junior": [],
         "senior": []
     }
-
     totalCredits = {
         "freshman": [],
         "sophomore": [],
@@ -47,6 +53,15 @@ def updateGPA():
         totalGrades[yearColumn].append(gradeColumn)
         totalCredits[yearColumn].append(creditColumn)
 
+    return totalGrades, totalCredits
+
+
+def updateGPA():
+    """Updates the GPA values in the overallGrades dictionary
+    """
+    totalGrades, totalCredits = fetchGrades()
+    global overallGrades
+
     totalGPA = {
         "overallGPA": 0.0,
         "freshmanGPA": 0.0,
@@ -55,14 +70,24 @@ def updateGPA():
         "seniorGPA": 0.0
     }
 
-    allGrades = []
-    allCredits = []
+    # These 2 lists will be divided to get the actual GPA
+    allGrades = []  # List of all the weighted GPA values
+    allCredits = []  # List of all the credits
+
     for year, yearValue in totalGrades.items():
         try:
             theseGrades = 0
+
+            # Adds up all the grades for the year
+            # Converts each grade to a GPA value
+            # Weights each GPA value depending on credits
             for i, grade in enumerate(yearValue):
                 theseGrades += (convertGrade(grade) * totalCredits[year][i])
+
+            # Divides the total weighted GPA value by the total credits
             totalGPA[year + "GPA"] = theseGrades / sum(totalCredits[year])
+
+            # Adds values to master lists for overall GPA calculation
             allGrades.append(theseGrades)
             allCredits.append(sum(totalCredits[year]))
         except ZeroDivisionError:
@@ -70,31 +95,40 @@ def updateGPA():
 
     try:
         totalGPA["overallGPA"] = sum(allGrades) / sum(allCredits)
-
     except ZeroDivisionError:
         totalGPA["overallGPA"] = 0.0
 
-    for key, value in totalGPA.items():
-        overallGrades[key] = value
-
-
-conversionValues = {
-    94: 4.0,
-    90: 3.7,
-    87: 3.3,
-    84: 3.0,
-    80: 2.7,
-    77: 2.3,
-    74: 2.0,
-    70: 1.7,
-    67: 1.3,
-    64: 1.0,
-    60: 0.7,
-    0: 0.0
-}
+    overallGrades = totalGPA
 
 
 def convertGrade(grade: int) -> float:
+    """Converts a grade to a GPA value.
+
+    Args:
+        grade (int): Grade value 1-100
+
+    Raises:
+        ValueError: Grade value outside range
+
+    Returns:
+        float: GPA value
+    """
+
+    conversionValues = {
+        94: 4.0,
+        90: 3.7,
+        87: 3.3,
+        84: 3.0,
+        80: 2.7,
+        77: 2.3,
+        74: 2.0,
+        70: 1.7,
+        67: 1.3,
+        64: 1.0,
+        60: 0.7,
+        0: 0.0
+    }
+
     if grade < 60:
         return 0.0
     for key, value in conversionValues.items():
