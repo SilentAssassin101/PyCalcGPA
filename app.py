@@ -134,7 +134,14 @@ class CredList(QWidget):
         self.setLayout(layout)
         self.setMinimumSize(QSize(750, 0))
 
-    def addEntry(self, course: str, credits: float, grade: int, year="Freshman", save=True):
+    def addEntry(
+        self,
+        course: str,
+        credits: float,
+        grade: int,
+        year="Freshman",
+        save=True
+    ):
         """Adds an entry to the table.
         Optionally commits it to the database.
 
