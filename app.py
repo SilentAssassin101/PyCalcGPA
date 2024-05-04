@@ -159,8 +159,11 @@ class CredList(QWidget):
             self.parentWindow.updateLeft()
 
     def removeEntry(self, row):
-        course = self.credWidget.item(row, 0).text()
-        self.credWidget.removeRow(row)
+        try:
+            course = self.credWidget.item(row, 0).text()
+            self.credWidget.removeRow(row)
+        except AttributeError:
+            print("No course to remove")
         cur.execute("DELETE FROM grades WHERE course=?", (course,))
         con.commit()
         self.parentWindow.updateLeft()
@@ -318,6 +321,20 @@ class AddCreditWindow(QDialog):
             self.gradeEntry.text() == ""
         ):
             return
+        try:
+            float(self.creditsEntry.text())
+            int(self.gradeEntry.text())
+        except ValueError:
+            return
+
+        try:
+            testNum = float(self.creditsEntry.text())
+            if testNum > 100:
+                return
+        except Exception as e:
+            print(e)
+            return
+
         self.submitted.emit(
             self.courseEntry.text(),
             float(self.creditsEntry.text()),
@@ -388,6 +405,14 @@ class EditCreditWindow(QDialog):
             float(self.creditsEntry.text())
             int(self.gradeEntry.text())
         except ValueError:
+            return
+
+        try:
+            testNum = float(self.creditsEntry.text())
+            if testNum > 100:
+                return
+        except Exception as e:
+            print(e)
             return
 
         self.credList.removeEntry(self.row)
