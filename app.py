@@ -558,6 +558,10 @@ class EditCreditWindow(QDialog):
             self.gradeEntry.text(),
             self.yearEntry.text()
         )
+        # Refresh the right side
+        self.credList.credWidget.setRowCount(0)
+        self.credList.setup()
+
         self.close()
 
 
