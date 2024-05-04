@@ -101,11 +101,12 @@ def updateGPA():
     overallGrades = totalGPA
 
 
-def convertGrade(grade: int) -> float:
+def convertGrade(grade: int, className=None) -> float:
     """Converts a grade to a GPA value.
 
     Args:
         grade (int): Grade value 1-100
+        className (str, optional): Class name. Defaults to None.
 
     Raises:
         ValueError: Grade value outside range
@@ -128,6 +129,15 @@ def convertGrade(grade: int) -> float:
         60: 0.7,
         0: 0.0
     }
+
+    weighted = True  # Set to False if you don't want to weight AP/Honors
+
+    if className and weighted:
+        className = className.lower()
+        words = className.split()
+        if "ap" in words or "honors" in words:
+            for key, value in conversionValues.items():
+                value * 1.25
 
     if grade < 60:
         return 0.0
@@ -203,7 +213,7 @@ class CredList(QWidget):
         self.credWidget.setItem(rowPosition, 1, QTableWidgetItem(str(credits)))
         self.credWidget.setItem(rowPosition, 2, QTableWidgetItem(str(grade)))
 
-        gpa = convertGrade(int(grade))
+        gpa = convertGrade(int(grade), course)
 
         self.credWidget.setItem(rowPosition, 3, QTableWidgetItem(str(gpa)))
         self.credWidget.setItem(rowPosition, 4, QTableWidgetItem(str(year)))
