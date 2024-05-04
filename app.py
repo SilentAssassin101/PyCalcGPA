@@ -40,8 +40,12 @@ def updateGPA():
     }
 
     for row in res.fetchall():
-        totalGrades[row[3].lower()].append(row[2])
-        totalCredits[row[3].lower()].append(row[1])
+        gradeColumn = row[2]
+        creditColumn = row[1]
+        yearColumn = row[3].lower()
+
+        totalGrades[yearColumn].append(gradeColumn)
+        totalCredits[yearColumn].append(creditColumn)
 
     totalGPA = {
         "overallGPA": 0.0,
@@ -59,7 +63,6 @@ def updateGPA():
             for i, grade in enumerate(yearValue):
                 theseGrades += (convertGrade(grade) * totalCredits[year][i])
             totalGPA[year + "GPA"] = theseGrades / sum(totalCredits[year])
-
             allGrades.append(theseGrades)
             allCredits.append(sum(totalCredits[year]))
         except ZeroDivisionError:
@@ -76,22 +79,22 @@ def updateGPA():
 
 
 conversionValues = {
-            94: 4.0,
-            90: 3.7,
-            87: 3.3,
-            84: 3.0,
-            80: 2.7,
-            77: 2.3,
-            74: 2.0,
-            70: 1.7,
-            67: 1.3,
-            64: 1.0,
-            60: 0.7,
-            0: 0.0
-        }
+    94: 4.0,
+    90: 3.7,
+    87: 3.3,
+    84: 3.0,
+    80: 2.7,
+    77: 2.3,
+    74: 2.0,
+    70: 1.7,
+    67: 1.3,
+    64: 1.0,
+    60: 0.7,
+    0: 0.0
+}
 
 
-def convertGrade(grade):
+def convertGrade(grade: int) -> float:
     if grade < 60:
         return 0.0
     for key, value in conversionValues.items():
@@ -131,17 +134,36 @@ class CredList(QWidget):
         self.setLayout(layout)
         self.setMinimumSize(QSize(750, 0))
 
-    def addEntry(self, course, credits, grade, year="Freshman", save=True):
+    def addEntry(self, course: str, credits: float, grade: int, year="Freshman", save=True):
+        """Adds an entry to the table.
+        Optionally commits it to the database.
+
+        Args:
+            course (str): _description_
+            credits (float): _description_
+            grade (int): _description_
+            year (str, optional): _description_. Defaults to "Freshman".
+            save (bool, optional): _description_. Defaults to True.
+
+        Raises:
+            ValueError: invalid year
+            ValueError: invalid credits, course, or grade
+        """
+
         if year not in ["Freshman", "Sophomore", "Junior", "Senior"]:
             raise ValueError("Invalid year")
         if course == "" or float(credits) == 0 or grade == "":
             raise ValueError("Invalid data")
+
         rowPosition = self.credWidget.rowCount()
+
         self.credWidget.insertRow(rowPosition)
         self.credWidget.setItem(rowPosition, 0, QTableWidgetItem(str(course)))
         self.credWidget.setItem(rowPosition, 1, QTableWidgetItem(str(credits)))
         self.credWidget.setItem(rowPosition, 2, QTableWidgetItem(str(grade)))
+
         gpa = convertGrade(int(grade))
+
         self.credWidget.setItem(rowPosition, 3, QTableWidgetItem(str(gpa)))
         self.credWidget.setItem(rowPosition, 4, QTableWidgetItem(str(year)))
         self.credWidget.setCellWidget(
@@ -150,6 +172,7 @@ class CredList(QWidget):
         self.credWidget.setCellWidget(
             rowPosition, 6, RemoveButton(self, rowPosition)
         )
+
         if save:
             cur.execute(
                 "INSERT INTO grades VALUES (?, ?, ?, ?)",
@@ -158,7 +181,12 @@ class CredList(QWidget):
             con.commit()
             self.parentWindow.updateLeft()
 
-    def removeEntry(self, row):
+    def removeEntry(self, row: int):
+        """Removes an entry from the table and the database.
+
+        Args:
+            row (int): row index to remove
+        """
         try:
             course = self.credWidget.item(row, 0).text()
             self.credWidget.removeRow(row)
@@ -168,7 +196,12 @@ class CredList(QWidget):
         con.commit()
         self.parentWindow.updateLeft()
 
-    def editEntry(self, row):
+    def editEntry(self, row: int):
+        """Modifies an entry in the table and the database.
+
+        Args:
+            row (int): row index to edit
+        """
         course = self.credWidget.item(row, 0).text()
         credits = float(self.credWidget.item(row, 1).text())
         grade = int(self.credWidget.item(row, 2).text())
@@ -176,6 +209,8 @@ class CredList(QWidget):
         EditCreditWindow(self, row, course, year, credits, grade).exec()
 
     def setup(self):
+        """initializes the table with data from the database
+        """
         res = cur.execute("SELECT * FROM grades")
         for row in res.fetchall():
             self.addEntry(row[0], row[1], row[2], row[3], False)
@@ -183,7 +218,7 @@ class CredList(QWidget):
 
 
 class RemoveButton(QPushButton):
-    def __init__(self, credList, row):
+    def __init__(self, credList: CredList, row: int):
         super(RemoveButton, self).__init__()
         self.setText("Remove")
         self.setStyleSheet("background-color: red")
@@ -191,7 +226,7 @@ class RemoveButton(QPushButton):
 
 
 class EditButton(QPushButton):
-    def __init__(self, credList, row):
+    def __init__(self, credList: CredList, row: int):
         super(EditButton, self).__init__()
         self.setText("Edit")
         self.setStyleSheet("background-color: blue")
@@ -199,7 +234,7 @@ class EditButton(QPushButton):
 
 
 class GradeList(QWidget):
-    def __init__(self, credList):
+    def __init__(self, credList: CredList):
         super(GradeList, self).__init__()
 
         self.credList = credList
@@ -219,11 +254,15 @@ class GradeList(QWidget):
         self.setLayout(layout)
 
     def addCredit(self):
+        """Adds a credit to the list of credits (right bar)
+        """
         addCreditWindow = AddCreditWindow(self)
         addCreditWindow.submitted.connect(self.credList.addEntry)
         addCreditWindow.exec()
 
     def updateSelf(self):
+        """Updates the grade list with the current GPA values (left bar)
+        """
 
         self.gradeWidget.clear()
         self.gradeWidget.addItem(
@@ -278,8 +317,10 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(widget)
 
     def updateLeft(self):
-        updateGPA()
-        self.theGradeList.updateSelf()
+        """Updates the stored GPA values then updates the grade list
+        """
+        updateGPA()  # Update the GPA values
+        self.theGradeList.updateSelf()  # Update the grade list
 
 
 class AddCreditWindow(QDialog):
