@@ -146,14 +146,12 @@ def convertGrade(grade: int, className=None) -> float:
     }
 
     weighted = True  # Set to False if you don't want to weight AP/Honors
-
     if className and weighted:
         className = className.lower()
         words = className.split()
         if "ap" in words or "honors" in words:
             for key, value in conversionValues.items():
-                value * 1.25
-
+                conversionValues[key] = value * 1.25
     if grade < 60:
         return 0.0
     for key, value in conversionValues.items():
