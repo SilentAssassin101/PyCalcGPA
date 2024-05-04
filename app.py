@@ -358,6 +358,26 @@ class EditCreditWindow(QDialog):
         self.setLayout(layout)
 
     def onSubmit(self):
+        # Data Validation
+        data = [
+            self.courseEntry.text(),
+            self.creditsEntry.text(),
+            self.gradeEntry.text(),
+            self.yearEntry.text()
+        ]
+        for item in data:
+            if item == "":
+                return
+        if self.yearEntry.text() not in [
+            "Freshman", "Sophomore", "Junior", "Senior"
+        ]:
+            return
+        try:
+            float(self.creditsEntry.text())
+            int(self.gradeEntry.text())
+        except ValueError:
+            return
+
         self.credList.removeEntry(self.row)
         self.credList.addEntry(
             self.courseEntry.text(),
